@@ -1,3 +1,9 @@
 numpy
 pandas
 openpyxl
+jupyter
+nltk
+sklearn
+contractions
+tensorflow
+gensim<4
