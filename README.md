@@ -15,6 +15,15 @@ pip install -r requirements.txt
 ```
 To deactivate the environment run `deactivate`.
 
+You have to download _nltk_ data
+```bash
+python -c "import nltk; nltk.download('popular')"
+```
+and _glove_ models.
+```bash
+wget -O models/glove.6B.zip http://nlp.stanford.edu/data/glove.6B.zip
+```
+
 ## Installing Python dependencies
 To install a new dependency, for example the _pandas_ library, add it to the _requirements.in_ file and install it either with `pip install pandas` or the following command.
 ```bash

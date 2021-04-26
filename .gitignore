@@ -8,6 +8,8 @@ tmp/
 
 adhoc.py
 
+models/glove.*
+
 # Editors
 out/
 .idea_modules/
