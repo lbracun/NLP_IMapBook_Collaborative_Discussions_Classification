@@ -1,11 +1,23 @@
 import pandas as pd
-
-DISCUSSIONS_DATASET_PATH = "../data/IMapBook_discussions_dataset.xlsx"
+import utils
+from sklearn.dummy import DummyClassifier
+from tfidf_model import TFIDFModel
 
 
 def main():
-    df: pd.DataFrame = pd.read_excel(DISCUSSIONS_DATASET_PATH)
-    print(df.head())
+    data_df = utils.load_annotated_discussions_data(keep_punctuation=True)
+
+    messages = data_df[utils.COL_MESSAGE]
+    target = data_df[utils.COL_TARGET]
+
+    majority_model = DummyClassifier(strategy="most_frequent")
+    tfidf_model = TFIDFModel(regularization=0.01)
+
+    models = [majority_model, tfidf_model]
+
+    evaluations = utils.evaluate_models(models, messages, target)
+    for model_name, eval in evaluations.items():
+        print(model_name, eval)
 
 
 if __name__ == "__main__":
