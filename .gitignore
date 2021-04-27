@@ -10,6 +10,8 @@ adhoc.py
 
 models/glove.*
 
+models/bert/*
+
 # Editors
 out/
 .idea_modules/
