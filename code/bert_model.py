@@ -14,6 +14,8 @@ class BertModel(BaseEstimator):
         self.train = train
 
         # set model
+        # download from here: https://drive.google.com/file/d/1DblEPtyKZ0olTPe1tG_dZUWxOPJs6Oen/view?usp=sharing
+        # or train yourself -> use bert.ipynb
         self._model = TFBertForSequenceClassification.from_pretrained('../models/bert/', num_labels=15)
         
         # set tokenizer
