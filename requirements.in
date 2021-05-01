@@ -6,4 +6,6 @@ nltk
 sklearn
 contractions
 tensorflow
-gensim<4
+gensim==4.0.0
+transformers
+python-Levenshtein
