@@ -79,7 +79,7 @@ class BertModel(BaseEstimator):
 
     # from labs 09 - Transformers and BERT
     def get_token_ids(self, texts):
-        return self._tokenizer.batch_encode_plus(texts, 
+        return self._tokenizer.batch_encode_plus(texts['Message'], 
                                             add_special_tokens=True, 
                                             max_length = 128, 
                                             pad_to_max_length = True)["input_ids"]
