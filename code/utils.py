@@ -4,10 +4,9 @@ from typing import Tuple
 
 import contractions
 import nltk
-from nltk.probability import FreqDist
-from nltk.corpus import stopwords
 import numpy as np
 import pandas as pd
+from nltk.corpus import stopwords
 from sklearn import model_selection
 
 DISCUSSIONS_DATASET_PATH = "../data/IMapBook_discussions_dataset.xlsx"
@@ -22,8 +21,10 @@ COL_MESSAGE_LEN = "Message Length"
 COL_BOOK_SIMILARITY = "Book Similarity"
 COL_CONTAINS_LINK = "Contains Link"
 COL_CONTAINS_EMOTICON = "Contains Emoticon"
-COL_UPPERCASE_NUM = "Number of uppercase letters"
-COL_QUESTION_NUM = "Number of question words"
+COL_UPPERCASE_COUNT = "Uppercase Count"
+COL_QUESTION_COUNT = "Question Words Count"
+COL_WORD_COUNT = "Word Count"
+COL_CHAR_COUNT = "Char Count"
 
 COL_TARGET = "CodePreliminary"
 
@@ -54,15 +55,17 @@ def load_discussions_data(keep_punctuation=True) -> Tuple[pd.DataFrame, pd.Serie
     target_df = preprocess_target(joined_df[COL_TARGET])
     data_df = joined_df[[COL_MESSAGE, COL_BOOKID, COL_BOOKCLUB, COL_PSEUDONYM, COL_RESP_NUMBER, COL_COLLAB_RESP]].copy()
 
+    data_df[COL_UPPERCASE_COUNT] = data_df.apply(uppercase_letters_feature, axis=1)
     data_df[COL_CONTAINS_EMOTICON] = data_df.apply(emoticons_feature, axis=1)
     data_df[COL_CONTAINS_LINK] = data_df.apply(has_link_feature, axis=1)
-    data_df[COL_UPPERCASE_NUM] = data_df.apply(uppercase_letters_feature, axis=1)
-    data_df.loc[:, COL_MESSAGE] = preprocess_text(data_df[COL_MESSAGE], keep_punctuation)
-    data_df.loc[:, COL_COLLAB_RESP] = preprocess_text(data_df[COL_COLLAB_RESP], keep_punctuation)
-    data_df[COL_BOOK_SIMILARITY] = data_df.apply(message_book_similarity, axis=1)
-    data_df[COL_QUESTION_NUM] = data_df.apply(questions_feature, axis=1)
 
-    print(data_df)
+    data_df[COL_MESSAGE] = preprocess_text(data_df[COL_MESSAGE], keep_punctuation)
+    data_df[COL_COLLAB_RESP] = preprocess_text(data_df[COL_COLLAB_RESP], keep_punctuation)
+
+    data_df[COL_QUESTION_COUNT] = data_df.apply(questions_feature, axis=1)
+    data_df[COL_BOOK_SIMILARITY] = data_df.apply(message_book_similarity, axis=1)
+    data_df[COL_WORD_COUNT] = data_df.apply(word_count_feature, axis=1)
+    data_df[COL_CHAR_COUNT] = data_df.apply(char_count_feature, axis=1)
 
     return data_df, target_df
 
@@ -109,12 +112,13 @@ def cross_validate_model(model, data_df, target_df, n_splits=4, random_state=1, 
     )
     return scores
 
-def preprocess_book(title: string):
+
+def preprocess_book(title: str):
     path = "../data/books/" + title
 
-    with open(path, 'r') as book: 
-        book = book.read().replace('“', '"').replace('”', '"').replace("’", "'").replace("—", "-").replace("…", "")
-        text = book.lower()        
+    with open(path, "r") as book:
+        book = book.read().replace("“", '"').replace("”", '"').replace("’", "'").replace("—", "-").replace("…", "")
+        text = book.lower()
 
         table = text.maketrans({key: "" for key in string.punctuation})
         text = text.translate(table)
@@ -122,62 +126,60 @@ def preprocess_book(title: string):
         lemmatizer = nltk.stem.WordNetLemmatizer()
 
         tokens = []
-        for token in nltk.word_tokenize(text): 
+        for token in nltk.word_tokenize(text):
             tokens.append(lemmatizer.lemmatize(token))
 
-        tokens = [token for token in tokens if token not in stopwords.words("english")]
-        freq = FreqDist(tokens)
-        #freq.plot(30)
-
-        tokens_filtered = []
-        for token in tokens: 
-            if token not in tokens_filtered:
-                tokens_filtered.append(token)
-        
-        return tokens_filtered
+        tokens = set(token for token in tokens if token not in stopwords.words("english"))
+        return tokens
 
 
 book1 = preprocess_book("Design_for_the_Future_When_the_Future_Is_Bleak.txt")
 book2 = preprocess_book("Just_Have_Less.txt")
 book3 = preprocess_book("The_Lady_or_the_Tiger.txt")
 
-def message_book_similarity(row): 
+
+def message_book_similarity(row):
     message = row[COL_MESSAGE].split(" ")
-    bookid = row [COL_BOOKID]
-    book = None
-    
-    if (bookid == 260 or bookid == 261):
+    bookid = row[COL_BOOKID]
+
+    if bookid == 260 or bookid == 261:
         book = book3
-    elif (bookid == 266 or bookid == 267): 
+    elif bookid == 266 or bookid == 267:
         book = book1
     else:
         book = book2
 
     return sum([m in book for m in message])
 
+
 def word_count_feature(row):
     return len(row[COL_MESSAGE].split(" "))
 
+
 def char_count_feature(row):
     return len(row[COL_MESSAGE])
+
 
 def has_link_feature(row):
     regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
     return 1 if re.match(regex, row[COL_MESSAGE]) else 0
 
+
 def emoticons_feature(row):
     regex = r"(\:\w+\:|\<[\/\\]?3|\*\$][\-\^]?[\:\;\=]|[\:\;\=B8][\-\^]?[3DOPp\@\$\*\\\)\(\/\|])(?=\s|[\!\.\?]|$)"
     return 1 if re.match(regex, row[COL_MESSAGE]) else 0
 
+
 def uppercase_letters_feature(row):
     return sum(1 for c in row[COL_MESSAGE] if c.isupper())
 
+
 def questions_feature(row):
-    words = ["what", "when", "who", "where", "why", "which", "how"]
+    words = {"what", "when", "who", "where", "why", "which", "how"}
 
     count = 0
     for word in row[COL_MESSAGE].split(" "):
-        if word in words: 
+        if word in words:
             count += 1
 
     return count
