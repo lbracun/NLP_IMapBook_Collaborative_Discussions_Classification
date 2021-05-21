@@ -22,6 +22,8 @@ COL_MESSAGE_LEN = "Message Length"
 COL_BOOK_SIMILARITY = "Book Similarity"
 COL_CONTAINS_LINK = "Contains Link"
 COL_CONTAINS_EMOTICON = "Contains Emoticon"
+COL_UPPERCASE_NUM = "Number of uppercase letters"
+COL_QUESTION_NUM = "Number of question words"
 
 COL_TARGET = "CodePreliminary"
 
@@ -54,9 +56,11 @@ def load_discussions_data(keep_punctuation=True) -> Tuple[pd.DataFrame, pd.Serie
 
     data_df[COL_CONTAINS_EMOTICON] = data_df.apply(emoticons_feature, axis=1)
     data_df[COL_CONTAINS_LINK] = data_df.apply(has_link_feature, axis=1)
+    data_df[COL_UPPERCASE_NUM] = data_df.apply(uppercase_letters_feature, axis=1)
     data_df.loc[:, COL_MESSAGE] = preprocess_text(data_df[COL_MESSAGE], keep_punctuation)
     data_df.loc[:, COL_COLLAB_RESP] = preprocess_text(data_df[COL_COLLAB_RESP], keep_punctuation)
     data_df[COL_BOOK_SIMILARITY] = data_df.apply(message_book_similarity, axis=1)
+    data_df[COL_QUESTION_NUM] = data_df.apply(questions_feature, axis=1)
 
     print(data_df)
 
@@ -107,20 +111,23 @@ def cross_validate_model(model, data_df, target_df, n_splits=4, random_state=1, 
 
 def preprocess_book(title: string):
     path = "../data/books/" + title
+
     with open(path, 'r') as book: 
         book = book.read().replace('“', '"').replace('”', '"').replace("’", "'").replace("—", "-").replace("…", "")
-        text = book.lower()
+        text = book.lower()        
 
         table = text.maketrans({key: "" for key in string.punctuation})
         text = text.translate(table)
 
-        tokens = nltk.word_tokenize(text)
-        
+        lemmatizer = nltk.stem.WordNetLemmatizer()
+
+        tokens = []
+        for token in nltk.word_tokenize(text): 
+            tokens.append(lemmatizer.lemmatize(token))
 
         tokens = [token for token in tokens if token not in stopwords.words("english")]
-        #freq = FreqDist(tokens)
-        #print(len(tokens))
-        #freq.plot(20)
+        freq = FreqDist(tokens)
+        #freq.plot(30)
 
         tokens_filtered = []
         for token in tokens: 
@@ -161,3 +168,16 @@ def has_link_feature(row):
 def emoticons_feature(row):
     regex = r"(\:\w+\:|\<[\/\\]?3|\*\$][\-\^]?[\:\;\=]|[\:\;\=B8][\-\^]?[3DOPp\@\$\*\\\)\(\/\|])(?=\s|[\!\.\?]|$)"
     return 1 if re.match(regex, row[COL_MESSAGE]) else 0
+
+def uppercase_letters_feature(row):
+    return sum(1 for c in row[COL_MESSAGE] if c.isupper())
+
+def questions_feature(row):
+    words = ["what", "when", "who", "where", "why", "which", "how"]
+
+    count = 0
+    for word in row[COL_MESSAGE].split(" "):
+        if word in words: 
+            count += 1
+
+    return count
