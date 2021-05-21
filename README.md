@@ -13,7 +13,7 @@ python main.py
 ```
 To run any additional models just uncomment them the main file, but evaluation can take a long time (more than an hour for bert).
 
-Notebook _custom_features.ipynb_ contains an analysis of custom features.
+Notebook _custom_features.ipynb_ contains some analysis of custom features.
 
 ## Local environment setup
 Create a virtual environment either with the help of your IDE or via shell.
