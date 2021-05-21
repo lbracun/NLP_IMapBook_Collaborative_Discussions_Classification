@@ -13,6 +13,19 @@ from tfidf_model import TFIDFModel
 
 GLOVE_PATH = "../models/glove.6B.100d.txt"
 
+CUSTOM_NAMES = [
+    utils.COL_BOOK_SIMILARITY,
+    utils.COL_CONTAINS_EMOTICON,
+    utils.COL_CONTAINS_LINK,
+    utils.COL_WORD_COUNT,
+    utils.COL_CHAR_COUNT,
+    utils.COL_UPPERCASE_COUNT,
+    # utils.COL_QUESTION_COUNT,
+]
+
+
+# TF-IDF / Logistic regression model evaluation should be fast.
+
 
 def main():
     data_df, target_df = utils.load_discussions_data(keep_punctuation=True)
@@ -20,9 +33,9 @@ def main():
     # glove = KeyedVectors.load_word2vec_format(GLOVE_PATH, binary=False, no_header=True)
 
     majority_model = DummyClassifier(strategy="most_frequent")
-    tfidf_model = TFIDFModel(regularization=0.01)
     # glove_model = GloveModel(glove, embedding_dim=100, n_filters=256, epochs=40)
     # bert_model = BertModel()
+    tfidf_model = TFIDFModel(regularization=0.1, custom_feature_names=CUSTOM_NAMES, max_iter=2500, solver="sag")
 
     models = [majority_model, tfidf_model]
     evaluations = utils.evaluate_models(models, data_df, target_df)
@@ -31,28 +44,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# {
-#     "DummyClassifier(strategy='most_frequent')": {
-#         "fit_time": 0.0021196603775024414,
-#         "score_time": 0.006248891353607178,
-#         "test_accuracy": 0.46848905438952837,
-#         "test_f1_macro": 0.04253689415292923,
-#         "test_neg_log_loss": -18.357737701887633,
-#     },
-#     "TFIDFModel(regularization=0.01)": {
-#         "fit_time": 4.65557986497879,
-#         "score_time": 0.17913484573364258,
-#         "test_accuracy": 0.665865493116678,
-#         "test_f1_macro": 0.4190023077913235,
-#         "test_neg_log_loss": -1.2442675188634662,
-#     },
-#     "GloveModel(embedding_dim=100, epochs=40, glove=<gensim.models.keyedvectors.KeyedVectors object at 0x7f53625bd940>)": {
-#         "fit_time": 81.70379132032394,
-#         "score_time": 0.6193323135375977,
-#         "test_accuracy": 0.6313924621981494,
-#         "test_f1_macro": 0.3428168250525275,
-#         "test_neg_log_loss": -8.493166933771246,
-#     },
-# }

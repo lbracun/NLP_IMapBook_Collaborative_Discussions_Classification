@@ -1,4 +1,3 @@
-import numpy as np
 import utils
 from nltk.corpus import stopwords
 from scipy import sparse
