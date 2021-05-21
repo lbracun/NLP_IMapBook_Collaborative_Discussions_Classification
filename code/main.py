@@ -20,7 +20,7 @@ CUSTOM_NAMES = [
     utils.COL_WORD_COUNT,
     utils.COL_CHAR_COUNT,
     utils.COL_UPPERCASE_COUNT,
-    # utils.COL_QUESTION_COUNT,
+    # utils.COL_QUESTION_COUNT,  # Intentional as it slightly hurts the performance
 ]
 
 
@@ -33,11 +33,16 @@ def main():
     # glove = KeyedVectors.load_word2vec_format(GLOVE_PATH, binary=False, no_header=True)
 
     majority_model = DummyClassifier(strategy="most_frequent")
+    tfidf_model = TFIDFModel(regularization=0.1, custom_feature_names=CUSTOM_NAMES, max_iter=2500, solver="sag")
     # glove_model = GloveModel(glove, embedding_dim=100, n_filters=256, epochs=40)
     # bert_model = BertModel()
-    tfidf_model = TFIDFModel(regularization=0.1, custom_feature_names=CUSTOM_NAMES, max_iter=2500, solver="sag")
 
-    models = [majority_model, tfidf_model]
+    models = [
+        majority_model,
+        tfidf_model,
+        # glove_model,
+        # bret_model,
+    ]
     evaluations = utils.evaluate_models(models, data_df, target_df)
     print(json.dumps(evaluations, indent=2))
 
